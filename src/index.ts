@@ -5,10 +5,14 @@ const errorFun = (reason: any) => {
   throw reason
 }
 
-type PromiseState = 'pending' | 'resolved' | 'rejected'
+const enum MyPromiseState {
+  Pending = 'pending',
+  Resolved = 'resolved',
+  Rejected = 'rejected'
+}
 
 export default class MyPromise<T> {
-  state: PromiseState | undefined  = undefined;
+  state: MyPromiseState | undefined  = undefined;
   value: T | undefined = undefined
   reason: any = undefined
   onResolvedTodoList = []
