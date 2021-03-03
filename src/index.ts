@@ -1,3 +1,4 @@
+import set = Reflect.set;
 
 const constantFun = (value: any) => value
 
@@ -17,7 +18,7 @@ const enum MyPromiseState {
  */
 export default class MyPromise<T> {
   // current state
-  state: MyPromiseState | undefined  = undefined;
+  state: MyPromiseState | undefined = undefined;
 
   value: T | undefined = undefined
   reason: any = undefined
@@ -29,7 +30,7 @@ export default class MyPromise<T> {
     try {
       excutor(this.resolve, this.reject)
       this.state = MyPromiseState.Pending
-    }catch (e) {
+    } catch (e) {
       this.reject(e)
     }
   }
@@ -59,9 +60,31 @@ export default class MyPromise<T> {
   }
 
 
-
   then(onResolve: any = constantFun, onRejected: any = errorFun) {
-    console.log(onResolve, onRejected)
+    switch (this.state) {
+      case MyPromiseState.Pending:
+        this.onResolvedTodoList.push(() => {
+          setTimeout(() => {
+            onResolve(this.value)
+          })
+        })
+        this.onRejectedTodoList.push(() => {
+          setTimeout(() => {
+            onRejected(this.reason)
+          })
+        })
+        break;
+      case MyPromiseState.Resolved:
+        setTimeout(() => {
+          onResolve(this.value)
+        })
+        break;
+      case MyPromiseState.Rejected:
+        setTimeout(() => {
+          onRejected(this.reason)
+        })
+        break;
+    }
   }
 
 }
