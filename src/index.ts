@@ -2,11 +2,22 @@
  * Asynchronous Container
  * The asynchronous operation entrusts the execution result
  */
-import { MyPromiseState } from "./interface";
-import { constantFun, errorFun, resolveContainer } from "./utils";
+import { MyPromiseState, MyPromiseClass } from "./interface";
+import { constantFun, errorFun } from "./utils";
 
+function resolveContainer<T>(containerBack: MyPromise<T>, value: T, resolve: any, reject: any) {
+  if (!(value instanceof MyPromise)) {
+    resolve(value)
+  } else {
+    if (value !== containerBack) {
+      value.then(resolve, reject)
+    } else {
+      reject(new TypeError('Chaining cycle detected for promise <Promise>'))
+    }
+  }
+}
 
-export default class MyPromise<T> {
+export default class MyPromise<T> implements MyPromiseClass<T> {
   // current state
   state: MyPromiseState | undefined = undefined;
 
