@@ -1,31 +1,11 @@
-const constantFun = (value: any) => value
-
-const errorFun = (reason: any) => {
-  throw reason
-}
-
-function resolveContainer<T>(containerBack: MyPromise<T>, value: T, resolve: any, reject: any) {
-  if (!(value instanceof MyPromise)) {
-    resolve(value)
-  } else {
-    if (value !== containerBack) {
-      value.then(resolve, reject)
-    } else {
-      reject(new TypeError('Chaining cycle detected for promise <Promise>'))
-    }
-  }
-}
-
-const enum MyPromiseState {
-  Pending = 'pending',
-  Resolved = 'resolved',
-  Rejected = 'rejected'
-}
-
 /**
  * Asynchronous Container
  * The asynchronous operation entrusts the execution result
  */
+import { MyPromiseState } from "./interface";
+import { constantFun, errorFun, resolveContainer } from "./utils";
+
+
 export default class MyPromise<T> {
   // current state
   state: MyPromiseState | undefined = undefined;
@@ -72,48 +52,36 @@ export default class MyPromise<T> {
 
   then(onResolve: any = constantFun, onRejected: any = errorFun) {
     const containerBack = new MyPromise((resolve: any, reject: any) => {
+      const resolveFun = () => {
+        try {
+          const value = onResolve(this.value)
+          resolveContainer(containerBack, value, resolve, reject)
+        } catch (e) {
+          reject(e)
+        }
+      }
+      const rejectFun = () => {
+        try {
+          const value = onRejected(this.reason)
+          resolveContainer(containerBack, value, resolve, reject)
+        } catch (e) {
+          reject(e)
+        }
+      }
       switch (this.state) {
         case MyPromiseState.Pending:
           this.onResolvedTodoList.push(() => {
-            setTimeout(() => {
-              try {
-                const value = onResolve(this.value)
-                resolveContainer(containerBack, value, resolve, reject)
-              } catch (e) {
-                reject(e)
-              }
-            })
+            setTimeout(resolveFun)
           })
           this.onRejectedTodoList.push(() => {
-            setTimeout(() => {
-              try {
-                const value = onRejected(this.reason)
-                resolveContainer(containerBack, value, resolve, reject)
-              } catch (e) {
-                reject(e)
-              }
-            })
+            setTimeout(rejectFun)
           })
           break;
         case MyPromiseState.Resolved:
-          setTimeout(() => {
-            try {
-              const value = onResolve(this.value)
-              resolveContainer(containerBack, value, resolve, reject)
-            } catch (e) {
-              reject(e)
-            }
-          })
+          setTimeout(resolveFun)
           break;
         case MyPromiseState.Rejected:
-          setTimeout(() => {
-            try {
-              const value = onRejected(this.reason)
-              resolveContainer(containerBack, value, resolve, reject)
-            } catch (e) {
-              reject(e)
-            }
-          })
+          setTimeout(rejectFun)
           break;
       }
     })
